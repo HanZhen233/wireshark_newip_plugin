@@ -93,7 +93,6 @@ do
     --协议名称为NewIP，在Packet Details窗格显示为NewIP
 	local p_NewIP = Proto("NewIP","NewIP")
 	
-
 	-- 源地址 0x01
 	local n_source_address_TL = ProtoField.string("NewIP.source_address_TL", "source_address_TL", base.ASCII)
 	-- local n_source_address_level = ProtoField.string("NewIP.source_address_level", "source_address_level", base.NONE)
@@ -112,7 +111,7 @@ do
 	local n_TTL = ProtoField.string("NewIP.TTL", "n_TTL", base.ASCII)
 	-- Source DevID 0x06
 	local n_source_dev_id = ProtoField.string("NewIP.source_dev_id", "n_source_dev_id", base.ASCII)
-	-- Source DevID 0x07
+	-- Destination DevID 0x07
 	local n_dest_dev_id = ProtoField.string("NewIP.dest_dev_id", "n_dest_dev_id", base.ASCII)
 	-- Identification 0x08
 	local n_identification = ProtoField.string("NewIP.identification", "n_identification", base.ASCII)
@@ -161,7 +160,6 @@ do
 		offset = offset + field_length
 	end
 
-
 	-- 各字段配置函数
 	local switch = {
 		[1] = function(buf)    -- 源地址
@@ -200,10 +198,22 @@ do
 			offset = offset + dest_address_length 
 		end,
 		[3] = function(buf)    -- for Security
-			fill_fields(n_TTL,"Security: ",buf)
+			fill_fields(n_securty,"Security: ",buf)
+		end,
+		[4] = function(buf)    -- for Policy
+			fill_fields(n_policy,"Policy: ",buf)
 		end,
 		[5] = function(buf)    -- for Time To Live
 			fill_fields(n_TTL,"Time To Live: ",buf)
+		end,
+		[6] = function(buf)    -- for Source DevID 
+			fill_fields(n_source_dev_id,"Source DevID: ",buf)
+		end,
+		[7] = function(buf)    -- for Destination DevID 
+			fill_fields(n_dest_dev_id,"Destination DevID: ",buf)
+		end,
+		[8] = function(buf)    -- for Identification
+			fill_fields(n_identification,"Identification: ",buf)
 		end,
 		[9] = function(buf)    -- for Total Length
 			fill_fields(n_total_length,"Total Length: ",buf)
@@ -226,6 +236,15 @@ do
 				field_name="Next Header: (Other)"
 			end
 			fill_fields(n_next_header,field_name,buf)
+		end,
+		[12] = function(buf)    -- for Source ServiceID
+			fill_fields(n_source_service_id,"Source ServiceID: ",buf)
+		end,
+		[13] = function(buf)    -- for Source ServiceID
+			fill_fields(n_dest_service_id,"Destination ServiceID: ",buf)
+		end,
+		[14] = function(buf)    -- for Fragment Offset
+			fill_fields(n_fragment_offset,"Fragment Offset: ",buf)
 		end
 	}
 
@@ -258,48 +277,11 @@ do
 			field_num=field_num+1
 			padding_offset=4*(offset+3)/4
 		end
-
-		-- -- TTL
-		-- local v_TTL = buf(offset,3)
-		-- local temp_TTL = buf(offset,3):uint()
-		-- offset = offset + 2
-		-- local TTL_value = buf(offset,1):uint()
-		-- local TTL_toshow = "Time To Live: "..string.format("%d",TTL_value)
-		-- t:add(n_TTL,v_TTL,temp_TTL,TTL_toshow)
-		-- offset = offset + 1
-	
-		-- -- next_header
-		-- local v_protocol = buf(offset, 3)
-		-- local temp_protocol = buf(offset, 3):uint()
-		-- offset = offset + 2
-		-- local next_header_value = buf(offset, 1):uint()
-		-- -- print(temp_protocol)
-		-- offset = offset + 1
-
-		-- -- HeaderLength
-		-- local v_header_length = buf(offset,3)
-		-- temp_header_length = buf(offset,3):uint()
-		-- offset = offset + 2
-		-- local header_length_value = buf(offset,1):uint()
-		-- local header_length_toshow = "Header Length: "..string.format("%d",header_length_value )
-		
-		-- offset = offset + 1
-
-		-- -- TotalLength
-		-- -- 先确定TotalLength值的长度
-		-- local totol_length_length=buf(offset+1,1):uint()
-		-- local v_total_length = buf(offset,2+totol_length_length)
-		-- local temp_total_length = buf(offset,2+totol_length_length):uint()
-		-- offset = offset + 2
-		-- local total_length_value = buf(offset,totol_length_length):uint()
-		-- local total_length_toshow = "Total Length: "..string.format("%d",total_length_value)
-		-- offset = offset + totol_length_length
-
-		-- -- 直接用头部长度来作偏移量
+		-- 偏移量
 		offset = header_length_value 
-		-- data
+		-- data 
+		-- 根据next header 确定上层协议
 		local v_data = buf(offset, (buflen - offset))
-
 		if(next_header_value == 58) then
 			Dissector.get("icmpv6"):call(v_data:tvb(), pkt, root)
 		elseif(next_header_value == 6) then 
