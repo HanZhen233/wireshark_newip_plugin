@@ -169,13 +169,15 @@ do
 		local source_address_type=buf(offset, 1):uint()
 		offset = offset + 1
 		local source_address_length = buf(offset, 1):uint()
-		local source_address_TL_to_show = "Source Address Type: "..string.format("%#x",source_address_type).."  Source Address Length: "..source_address_length
+		local source_address_TL_to_show = "Source Address Type: "..string.format("%#x",source_address_type)
+										  .."  Source Address Length: "..source_address_length
 		t:add(n_source_address_TL, v_source_address_TL, temp_source_address_TL, source_address_TL_to_show)
 		offset = offset + 1
 		-- 源地址及层级
 		local v_source_address = buf(offset, source_address_length)
 		local temp_source_address = buf(offset, source_address_length):string()
-		local source_address_toshow = "Source Address: "..showAddress(buf,offset,source_address_length).."  Level:"..showAddressLevel(buf,offset, source_address_length)
+		local source_address_toshow = "Source Address: "..showAddress(buf,offset,source_address_length)
+									.."  Level:"..showAddressLevel(buf,offset, source_address_length)
 		t:add(n_source_address, v_source_address, temp_source_address, source_address_toshow)
 		offset = offset + source_address_length
 
@@ -187,13 +189,15 @@ do
 			local dest_address_type = buf(offset,1):uint()
 			offset = offset + 1
         	local dest_address_length = buf(offset, 1):uint()
-        	local dest_address_TL_to_show = "Destination Address Type: "..string.format("%#x",dest_address_type).."  Destination Address Length: "..dest_address_length
+        	local dest_address_TL_to_show = "Destination Address Type: "..string.format("%#x",dest_address_type)
+											.."  Destination Address Length: "..dest_address_length
 			t:add(n_dest_address_TL, v_dest_address_TL, temp_dest_address_TL, dest_address_TL_to_show)
 			offset = offset + 1
 			-- 目标地址及层级
 			local  v_dest_address = buf(offset, dest_address_length)
 			local temp_dest_address = buf(offset, dest_address_length):string()
-			local dest_address_toshow = "Destination Address: "..showAddress(buf,offset,dest_address_length ).."  Level:"..showAddressLevel(buf,offset, dest_address_length )
+			local dest_address_toshow = "Destination Address: "..showAddress(buf,offset,dest_address_length )
+										.."  Level:"..showAddressLevel(buf,offset, dest_address_length )
 			t:add(n_dest_address, v_dest_address, temp_dest_address, dest_address_toshow)
 			offset = offset + dest_address_length 
 		end,
@@ -201,7 +205,21 @@ do
 			fill_fields(n_securty,"Security: ",buf)
 		end,
 		[4] = function(buf)    -- for Policy
-			fill_fields(n_policy,"Policy: ",buf)
+			-- fill_fields(n_policy,"Policy: ",buf)
+			local field_length = buf(offset+1,1):uint()
+			local v_policy= buf(offset,2+field_length)
+			local tmp_policy = buf(offset,2+field_length):string()
+			offset = offset + 2
+			local  policy_version = buf(offset,1):uint()
+			offset = offset + 1
+			local  policy_src_sercurity_group = buf(offset,2):uint()
+			offset = offset + 2
+			local  policy_dst_sercurity_group = buf(offset,2):uint()
+			local field_toshow = "Policy Version: "..string.format("%d",policy_version)
+								.."	Src Sercurity Group: "..string.format("%d",policy_src_sercurity_group)
+								.."	Dst Sercurity Group: "..string.format("%d",policy_dst_sercurity_group)
+			t:add(n_policy,v_policy,tmp_policy,field_toshow)
+			offset = offset + 2
 		end,
 		[5] = function(buf)    -- for Time To Live
 			fill_fields(n_TTL,"Time To Live: ",buf)
@@ -308,5 +326,5 @@ do
     
     local ipn_encap_table = DissectorTable.get("ethertype")
 	ipn_encap_table:add(0xEADD, p_NewIP)
-	-- ipn_encap_table:add(0x8999, p_NewIP)
+	--ipn_encap_table:add(0x8999, p_NewIP)
 end
