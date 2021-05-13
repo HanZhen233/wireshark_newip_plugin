@@ -293,7 +293,7 @@ do
 				match_field(buf)
 			end
 			field_num=field_num+1
-			padding_offset=4*(offset+3)/4
+			padding_offset=math.floor((offset+3)/4)*4
 		end
 		-- 偏移量
 		offset = header_length_value 
